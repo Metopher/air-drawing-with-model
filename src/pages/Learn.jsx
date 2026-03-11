@@ -12,6 +12,7 @@ function Learn() {
     const [feedback, setFeedback] = useState("");
     const [isChecking, setIsChecking] = useState(false);
     const [wordIndex, setWordIndex] = useState(0);
+    const [currentLetterIndex, setCurrentLetterIndex] = useState(0);
     const [model, setModel] = useState(null);
 
     let lastPoint = null;
@@ -156,6 +157,7 @@ function Learn() {
         const nextIndex = (wordIndex + 1) % WORDS_TO_LEARN.length;
         setWordIndex(nextIndex);
         setTargetWord(WORDS_TO_LEARN[nextIndex]);
+        setCurrentLetterIndex(0);
         clearCanvas();
     };
 
@@ -271,12 +273,22 @@ function Learn() {
 
             console.log("Predicted Index:", predictedIndex, "Char:", recognizedChar);
             
-            // We only check if the target word starts with the recognized char
-            // as this model seems to only predict a single character at a time.
-            if (targetWord.startsWith(recognizedChar.toUpperCase())) {
-                setFeedback(`Correct! Recognized: ${recognizedChar} 🎉`);
+            const targetChar = targetWord[currentLetterIndex].toUpperCase();
+            if (targetChar === recognizedChar.toUpperCase()) {
+                const nextIndex = currentLetterIndex + 1;
+                setCurrentLetterIndex(nextIndex);
+                
+                if (nextIndex >= targetWord.length) {
+                    setFeedback(`Perfect! You wrote "${targetWord}" 🎉`);
+                } else {
+                    setFeedback(`Correct '${targetChar}'! Now draw '${targetWord[nextIndex]}'`);
+                    // Clear the canvas for the next letter
+                    const canvas = drawCanvasRef.current;
+                    const ctx = canvas.getContext("2d");
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                }
             } else {
-                setFeedback(`Try again! Detected: "${recognizedChar || '?'}"`);
+                setFeedback(`Try again! Detected: "${recognizedChar || '?'}" instead of "${targetChar}"`);
             }
 
             // Cleanup
@@ -300,10 +312,21 @@ function Learn() {
                 <div style={{
                     fontSize: "4rem",
                     fontWeight: "bold",
-                    color: "var(--accent)",
                     letterSpacing: "0.5rem"
                 }}>
-                    {targetWord}
+                    {targetWord.split("").map((letter, i) => {
+                        let color = "inherit";
+                        if (i < currentLetterIndex) {
+                            color = "#10b981"; // green for completed
+                        } else if (i === currentLetterIndex) {
+                            color = "var(--accent)"; // highlight current letter
+                        }
+                        return (
+                            <span key={i} style={{ color, transition: "color 0.3s ease" }}>
+                                {letter}
+                            </span>
+                        );
+                    })}
                 </div>
                 <p className="text-secondary" style={{ minHeight: "1.5rem", color: feedback.includes("Correct") ? "#10b981" : "inherit" }}>
                     {feedback}
@@ -314,7 +337,7 @@ function Learn() {
                 <button onClick={clearCanvas} className="btn btn-outline" disabled={isChecking}>
                     <Trash2 size={18} /> Clear
                 </button>
-                <button onClick={checkAccuracy} className="btn btn-primary" disabled={isChecking}>
+                <button onClick={checkAccuracy} className="btn btn-primary" disabled={isChecking || currentLetterIndex >= targetWord.length}>
                     {isChecking ? <RefreshCw className="animate-spin" size={18} /> : <Check size={18} />} Check
                 </button>
                 <button onClick={nextWord} className="btn btn-outline" disabled={isChecking}>
