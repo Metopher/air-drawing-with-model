@@ -264,8 +264,10 @@ function Learn() {
             // ========================
 
             // Predict
-            const predictions = await model.predict(tensor).data();
-            const predictedIndex = predictions.indexOf(Math.max(...predictions));
+            const rawPredictions = Array.from(await model.predict(tensor).data());
+            // EMNIST indices 0-9 are digits — mask them out so we always get a letter
+            for (let i = 0; i < 10; i++) rawPredictions[i] = -Infinity;
+            const predictedIndex = rawPredictions.indexOf(Math.max(...rawPredictions));
             
             // Common EMNIST Balanced mapping (47 classes)
             const emnistMapping = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabdefghnqrt";
