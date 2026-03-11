@@ -311,6 +311,12 @@ function Learn() {
 
             <div style={{ marginBottom: "2rem" }}>
                 <p className="text-secondary" style={{ marginBottom: "0.5rem" }}>Draw this:</p>
+                {targetWord.length > 1 && (
+                    <p style={{ fontSize: "0.9rem", color: "var(--accent)", marginBottom: "0.5rem", opacity: 0.85 }}>
+                        ✏️ Draw it letter by letter! Now draw: <strong style={{ fontSize: "1.1rem" }}>{targetWord[currentLetterIndex]}</strong>
+                        {" "}({currentLetterIndex + 1}/{targetWord.length})
+                    </p>
+                )}
                 <div style={{
                     fontSize: "4rem",
                     fontWeight: "bold",
